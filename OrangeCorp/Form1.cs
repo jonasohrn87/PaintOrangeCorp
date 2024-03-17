@@ -13,6 +13,13 @@ namespace OrangeCorp
         private Color defaultShapeColor = Color.Black;
         private Color currentShapeColor;
         private bool colorChanged = false;
+
+        private JsonSerializerSettings jsonSettings = new JsonSerializerSettings
+        {
+            TypeNameHandling = TypeNameHandling.Auto,
+            //Converters = { new ShapeConverter() }
+        };
+
         public wack_form()
         {
             InitializeComponent();
@@ -33,6 +40,7 @@ namespace OrangeCorp
         private Stack<Shape> shapes = [];
         private Stack<Shape> redo = [];
 
+        public TypeNameHandling TypeNameHandling { get; private set; }
 
         private void pb_box_Click(object sender, EventArgs e)
         {
@@ -66,7 +74,7 @@ namespace OrangeCorp
 
             else if (drawRectangle)
             {
-                Rectangle rectangle = new Rectangle()
+                RectangleShape rectangle = new RectangleShape()
                 {
                     Color = shapeColor,
                     height = 20,
@@ -94,30 +102,30 @@ namespace OrangeCorp
 
         private void pb_box_Paint(object sender, PaintEventArgs e)
         {
-            
-                foreach (var s in shapes)
+
+            foreach (var s in shapes)
+            {
+                pen.Color = s.Color;
+
+                if (s is Circle c)
                 {
-                    pen.Color = s.Color;
+                    e.Graphics.DrawEllipse(pen, c.Center.X - c.Radius / 2, c.Center.Y - c.Radius / 2, c.Radius, c.Radius);
+                }
+                else if (s is Square sq)
+                {
+                    e.Graphics.DrawRectangle(pen, sq.Center.X, sq.Center.Y, sq.side, sq.side);
+                }
+                else if (s is RectangleShape r)
+                {
+                    e.Graphics.DrawRectangle(pen, r.Center.X, r.Center.Y, r.width, r.height);
+                }
+                else if (s is Triangle t)
+                {
+                    e.Graphics.DrawPolygon(pen, t.points);
+                }
 
-                    if (s is Circle c)
-                    {
-                        e.Graphics.DrawEllipse(pen, c.Center.X - c.Radius / 2, c.Center.Y - c.Radius / 2, c.Radius, c.Radius);
-                    }
-                    else if (s is Square sq)
-                    {
-                        e.Graphics.DrawRectangle(pen, sq.Center.X, sq.Center.Y, sq.side, sq.side);
-                    }
-                    else if (s is Rectangle r)
-                    {
-                        e.Graphics.DrawRectangle(pen, r.Center.X, r.Center.Y, r.width, r.height);
-                    }
-                    else if (s is Triangle t)
-                    {
-                        e.Graphics.DrawPolygon(pen, t.points);
-                    }
+            }
 
-                }   
-            
         }
 
 
@@ -192,19 +200,20 @@ namespace OrangeCorp
 
         private void bt_save_Click(object sender, EventArgs e)
         {
-            Bitmap bitmap = new Bitmap(pb_box.Width, pb_box.Height);
-            using (Graphics g = Graphics.FromImage(bitmap))
+
+            var result = saveFileDialog1.ShowDialog();
+
+            if (result == DialogResult.OK)
             {
-                pb_box.Paint += new PaintEventHandler(pb_box_Paint);
-                pb_box.Invalidate();
-            }
-                var result = saveFileDialog1.ShowDialog();
-                if (result == DialogResult.OK)
+                var settings = new JsonSerializerSettings()
                 {
-                    bitmap.Save(saveFileDialog1.FileName, ImageFormat.Png);
-                    //var json = Newtonsoft.Json.JsonConvert.SerializeObject(shapes);
-                    //File.WriteAllText(saveFileDialog1.FileName, json);
-                }
+                    TypeNameHandling = TypeNameHandling.All
+                };
+
+                var json = JsonConvert.SerializeObject(shapes, Formatting.Indented, jsonSettings);
+
+                File.WriteAllText(saveFileDialog1.FileName, json);
+            }
         }
 
         private void bt_undo_Click(object sender, EventArgs e)
@@ -230,14 +239,19 @@ namespace OrangeCorp
 
         private void bt_load_Click(object sender, EventArgs e)
         {
-            var result = openFileDialog1.ShowDialog();
+            var result = openFileDialog1.ShowDialog(this);
 
             if (result == DialogResult.OK)
             {
                 var file = openFileDialog1.FileName;
                 var content = File.ReadAllText(file);
 
-                var test = JsonConvert.DeserializeObject<Shape>(content);
+                var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
+                shapes = JsonConvert.DeserializeObject<Stack<Shape>>(content, settings);
+
+                var tempShapesList = new List<Shape>();
+
+                pb_box.Refresh();
             }
         }
 
@@ -251,43 +265,53 @@ namespace OrangeCorp
 
         }
 
-        //private void UpdatePenColor()
-        //{
-        //    pen.Color = colorChanged ? currentShapeColor : defaultShapeColor;
-        //    colorChanged = false;
-        //}
+        private void bt_saveFile_Click(object sender, EventArgs e)
+        {
+
+            var saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "PNG (.png)|.png|JPEG (.jpg;.jpeg)|.jpeg|BMP (.bmp)|.bmp|All files (.)|.*";
+            saveFileDialog.DefaultExt = "";
+            saveFileDialog.AddExtension = true;
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                SavePictureBoxToImage(saveFileDialog.FileName);
+            }
+        }
+
+        private void SavePictureBoxToImage(string filename)
+        {
+            if (pb_box == null && pb_box.Width == 0 && pb_box.Height == 0)
+               return;
+
+            using (var bitmap = new Bitmap(pb_box.Width, pb_box.Height))
+            {
+                pb_box.DrawToBitmap(bitmap, new Rectangle(0, 0, bitmap.Width, bitmap.Height));
+
+                using (Graphics g = Graphics.FromImage(bitmap))
+                {
+
+                }
+
+                ImageFormat format = ImageFormat.Png;
+                string extension = Path.GetExtension(filename).ToLowerInvariant();
+                switch (extension)
+                {
+                    case ".png":
+                        format = ImageFormat.Png;
+                        break;
+                    case ".jpg":
+                    case ".jpeg":
+                        format =ImageFormat.Jpeg;
+                        break;
+                    case ".bmp":
+                        format = ImageFormat.Bmp;
+                        break;
+                }
+
+                bitmap.Save(filename, format);
+            }
+        }
     }
 }
 
-
-
-//private void SaveAsImage(string fileName, ImageFormat format)
-//{
-//    // Skapa en ny bitmap med storleken av PictureBox
-//    Bitmap bmp = new Bitmap(pb_box.Width, pb_box.Height);
-
-//    // Rita PictureBox-innehållet på den nya bitmapen
-//    pb_box.DrawToBitmap(bmp, new Rectangle(0, 0, pb_box.Width, pb_box.Height));
-
-//    // Spara bitmapen till en fil i den valda formatet
-//    bmp.Save(fileName, format);
-
-//    // Frigör resurserna
-//    bmp.Dispose();
-//}
-
-// Anropa denna metod när du vill spara bilden till en fil
-// Exempel: SaveAsImage("ritad_bild.png", ImageFormat.Png);
-
-//För att använda detta måste du inkludera System.Drawing.
-//Imaging i ditt projekt och ange filnamnet och formatet
-//(PNG, BMP eller JPG) när du anropar SaveAsImage-metoden.
-
-//Till exempel:
-
-//csharp
-
-//SaveAsImage("ritad_bild.png", ImageFormat.Png);
-
-//Detta sparar den ritade figuren som en PNG-fil med filnamnet "ritad_bild.png". Du kan byta ut
-//filändelsen och filnamnet enligt dina önskemål.

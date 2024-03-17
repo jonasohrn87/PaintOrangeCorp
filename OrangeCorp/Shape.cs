@@ -8,6 +8,7 @@ namespace OrangeCorp
 {
     public abstract class Shape
     {
+        
         public Color Color { get; set; }
 
         public Point Center { get; set; }

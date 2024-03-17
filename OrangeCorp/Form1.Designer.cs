@@ -67,6 +67,7 @@
             pictureBox3 = new PictureBox();
             pictureBox2 = new PictureBox();
             pb_ChosenColor = new PictureBox();
+            bt_saveFile = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pb_box).BeginInit();
             panel1.SuspendLayout();
@@ -182,7 +183,7 @@
             // 
             // saveFileDialog1
             // 
-            saveFileDialog1.FileName = "shapes.png";
+            saveFileDialog1.FileName = "shapes.syn";
             saveFileDialog1.Filter = "Shape YrkeshögskolaN|*.syn|Alla filer|*.*";
             // 
             // bt_undo
@@ -499,11 +500,22 @@
             pb_ChosenColor.TabIndex = 13;
             pb_ChosenColor.TabStop = false;
             // 
+            // bt_saveFile
+            // 
+            bt_saveFile.Location = new Point(2, 282);
+            bt_saveFile.Name = "bt_saveFile";
+            bt_saveFile.Size = new Size(81, 29);
+            bt_saveFile.TabIndex = 14;
+            bt_saveFile.Text = "Save to file";
+            bt_saveFile.UseVisualStyleBackColor = true;
+            bt_saveFile.Click += bt_saveFile_Click;
+            // 
             // wack_form
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(bt_saveFile);
             Controls.Add(pb_ChosenColor);
             Controls.Add(panel1);
             Controls.Add(bt_load);
@@ -593,5 +605,6 @@
         private PictureBox pictureBox3;
         private PictureBox pictureBox2;
         private PictureBox pb_ChosenColor;
+        private Button bt_saveFile;
     }
 }

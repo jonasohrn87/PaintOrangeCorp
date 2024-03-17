@@ -8,6 +8,7 @@ namespace OrangeCorp
 {
     public  class Triangle : Shape
     {
+        
         public Point[] points {  get; set; }
         
     }
