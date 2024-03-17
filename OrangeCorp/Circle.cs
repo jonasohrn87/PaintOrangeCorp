@@ -8,6 +8,7 @@ namespace OrangeCorp
 {
     public class Circle : Shape
     {
+        
         public int Radius { get; set; }
         public int Diameter
         {

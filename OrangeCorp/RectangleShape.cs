@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace OrangeCorp
 {
-    public class Rectangle : Shape
+    public class RectangleShape : Shape
     {
+        public string Type { get; set; }
         public int width {  get; set; }
         public int height { get; set; }
     }

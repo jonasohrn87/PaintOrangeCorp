@@ -8,6 +8,7 @@ namespace OrangeCorp
 {
     public class Square : Shape
     {
+        
         public int side { get; set; }
     }
 }
