@@ -16,14 +16,13 @@ namespace OrangeCorp
 
         private JsonSerializerSettings jsonSettings = new JsonSerializerSettings
         {
-            TypeNameHandling = TypeNameHandling.Auto,
-            //Converters = { new ShapeConverter() }
+            TypeNameHandling = TypeNameHandling.Auto            
         };
 
         public wack_form()
         {
             InitializeComponent();
-            DoubleBuffered = true;
+            DoubleBuffered = true; //minskar risken att rita ytan flimrar när det ritas, var tänkt användas för att rita streck men kom inte så långt.
             saveFileDialog1.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         }
 
@@ -32,16 +31,21 @@ namespace OrangeCorp
 
         }
 
+        //bools för vardera form för att styra vilken som används och iså fall sätta resterande till false.
         private bool drawCircle = false;
         private bool drawSquare = false;
         private bool drawRectangle = false;
         private bool drawTriangle = false;
 
+        //använder stack för att kunna "ångra" och "ångra-ångra" det vi ritat ut på skärmen.
+        //I stack kan man enkelt ta bort det senaste inlagda elementet i "högen".
         private Stack<Shape> shapes = [];
         private Stack<Shape> redo = [];
 
         public TypeNameHandling TypeNameHandling { get; private set; }
 
+
+        //våran pictureBox där vi beroende på vilken checkbox vi kryssat i ritar ut vald figur med vald färg. 
         private void pb_box_Click(object sender, EventArgs e)
         {
             var mouse = (MouseEventArgs)e;
@@ -100,9 +104,9 @@ namespace OrangeCorp
             pb_box.Refresh();
         }
 
+
         private void pb_box_Paint(object sender, PaintEventArgs e)
         {
-
             foreach (var s in shapes)
             {
                 pen.Color = s.Color;
@@ -128,7 +132,7 @@ namespace OrangeCorp
 
         }
 
-
+        //Vi tömmer shapes på eventuella utritade figurer och updaterar våran picturebox
         private void btn_clear_Click(object sender, EventArgs e)
         {
             shapes.Clear();
@@ -197,7 +201,7 @@ namespace OrangeCorp
 
 
 
-
+        //Spara metod för att spara ner utritade figurer till en Jsonfil som vi sedan kan öppna upp igen.
         private void bt_save_Click(object sender, EventArgs e)
         {
 
@@ -215,7 +219,25 @@ namespace OrangeCorp
                 File.WriteAllText(saveFileDialog1.FileName, json);
             }
         }
+        private void bt_load_Click(object sender, EventArgs e)
+        {
+            var result = openFileDialog1.ShowDialog(this);
 
+            if (result == DialogResult.OK)
+            {
+                var file = openFileDialog1.FileName;
+                var content = File.ReadAllText(file);
+
+                var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
+                shapes = JsonConvert.DeserializeObject<Stack<Shape>>(content, settings);
+
+                var tempShapesList = new List<Shape>();
+
+                pb_box.Refresh();
+            }
+        }
+
+        //Flyttar element mellan våra stacks för att kunna ångra och sen ångra tillbaks mellan stackarna med våra utritade figurer
         private void bt_undo_Click(object sender, EventArgs e)
         {
 
@@ -237,24 +259,7 @@ namespace OrangeCorp
             }
         }
 
-        private void bt_load_Click(object sender, EventArgs e)
-        {
-            var result = openFileDialog1.ShowDialog(this);
-
-            if (result == DialogResult.OK)
-            {
-                var file = openFileDialog1.FileName;
-                var content = File.ReadAllText(file);
-
-                var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
-                shapes = JsonConvert.DeserializeObject<Stack<Shape>>(content, settings);
-
-                var tempShapesList = new List<Shape>();
-
-                pb_box.Refresh();
-            }
-        }
-
+        //Färgpalett för att välja mellan olika färger. Vi hämtar bakrundsfärgene från vald pictureBox som sätts till våran pen.
         private void pictureBox2_Click_1(object sender, EventArgs e)
         {
             PictureBox p = (PictureBox)sender;
@@ -265,6 +270,7 @@ namespace OrangeCorp
 
         }
 
+        //Metoder för att spara ner ritade filen till olika bildformat.
         private void bt_saveFile_Click(object sender, EventArgs e)
         {
 
